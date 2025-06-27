@@ -2,4 +2,5 @@ Flask
 qrcode
 pillow
 openai
-gunicorn 
+gunicorn
+requests 
