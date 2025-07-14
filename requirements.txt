@@ -1,6 +1,0 @@
-Flask
-qrcode
-pillow
-openai
-gunicorn
-requests 
