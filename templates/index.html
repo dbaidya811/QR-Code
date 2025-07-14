@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>QR Code Generator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23007aff'/%3E%3Crect x='12' y='12' width='12' height='12' rx='3' fill='white'/%3E%3Crect x='40' y='12' width='12' height='12' rx='3' fill='white'/%3E%3Crect x='12' y='40' width='12' height='12' rx='3' fill='white'/%3E%3Crect x='28' y='28' width='8' height='8' rx='2' fill='white'/%3E%3C/svg%3E">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #f2f3f7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .top-bar {
+            width: 100vw;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            background: transparent;
+            padding: 18px 18px 0 0;
+            position: relative;
+        }
+        .api-btn {
+            background: linear-gradient(90deg, #007aff 60%, #4f8cff 100%);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            padding: 8px 22px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px 0 rgba(0,122,255,0.10);
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .api-btn:hover, .api-btn:focus {
+            background: linear-gradient(90deg, #005ecb 60%, #3a6fd8 100%);
+            box-shadow: 0 4px 16px 0 rgba(0,122,255,0.13);
+        }
+        .api-doc-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.18);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .api-doc-content {
+            background: #fff;
+            border-radius: 18px;
+            max-width: 95vw;
+            width: 420px;
+            padding: 32px 24px 24px 24px;
+            box-shadow: 0 8px 32px 0 rgba(0,0,0,0.13);
+            position: relative;
+            font-size: 15px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .api-doc-content h2 {
+            margin-top: 0;
+            font-size: 1.3em;
+            color: #007aff;
+        }
+        .api-doc-content code, .api-doc-content pre {
+            background: #f2f3f7;
+            border-radius: 8px;
+            padding: 2px 6px;
+            font-size: 14px;
+            color: #222;
+        }
+        .api-doc-content pre {
+            display: block;
+            padding: 12px 10px;
+            margin: 10px 0 16px 0;
+            overflow-x: auto;
+        }
+        .close-btn {
+            position: absolute;
+            top: 12px;
+            right: 18px;
+            background: #eee;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            font-size: 18px;
+            color: #555;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .close-btn:hover {
+            background: #ddd;
+        }
+        .coffee-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #ffdd00;
+            color: #222;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            padding: 8px 18px;
+            margin-top: 18px;
+            margin-bottom: 2px;
+            box-shadow: 0 2px 8px 0 rgba(255,221,0,0.10);
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .coffee-btn:hover, .coffee-btn:focus {
+            background: #ffe866;
+            color: #111;
+            box-shadow: 0 4px 16px 0 rgba(255,221,0,0.13);
+        }
+        .coffee-cup {
+            font-size: 18px;
+        }
+        h1 {
+            margin-top: 40px;
+            color: #222;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+        form {
+            background: #f9fafb;
+            padding: 28px 20px 20px 20px;
+            border-radius: 22px;
+            box-shadow: 0 4px 24px 0 rgba(0,0,0,0.07), 0 1.5px 4px 0 rgba(0,0,0,0.03);
+            margin-top: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 350px;
+            max-width: 95vw;
+        }
+        label {
+            font-size: 15px;
+            color: #555;
+            margin-bottom: 2px;
+            font-weight: 500;
+        }
+        input[type="text"], input[type="number"], input[type="file"] {
+            padding: 12px 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+            background: #f2f3f7;
+            box-shadow: 0 1.5px 4px 0 rgba(0,0,0,0.03);
+            margin-bottom: 2px;
+            transition: box-shadow 0.2s, background 0.2s;
+        }
+        input[type="text"]:focus, input[type="number"]:focus, input[type="file"]:focus {
+            outline: none;
+            background: #e9eaf0;
+            box-shadow: 0 0 0 2px #007aff33;
+        }
+        input[type="file"] {
+            padding: 6px 0;
+            background: #f2f3f7;
+        }
+        button {
+            padding: 12px 0;
+            background: linear-gradient(90deg, #007aff 60%, #4f8cff 100%);
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 8px 0 rgba(0,122,255,0.10);
+            transition: background 0.2s, box-shadow 0.2s;
+            margin-top: 8px;
+        }
+        button:hover, button:focus {
+            background: linear-gradient(90deg, #005ecb 60%, #3a6fd8 100%);
+            box-shadow: 0 4px 16px 0 rgba(0,122,255,0.13);
+        }
+        .qr-section {
+            margin-top: 32px;
+            background: #f9fafb;
+            padding: 24px 20px;
+            border-radius: 22px;
+            box-shadow: 0 4px 24px 0 rgba(0,0,0,0.07), 0 1.5px 4px 0 rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 350px;
+            max-width: 95vw;
+        }
+        img {
+            margin-top: 12px;
+            border: none;
+            padding: 8px;
+            background: #f2f3f7;
+            border-radius: 16px;
+            max-width: 100%;
+            height: auto;
+            box-shadow: 0 1.5px 4px 0 rgba(0,0,0,0.04);
+        }
+        @media (max-width: 600px) {
+            form, .qr-section {
+                padding: 16px 6px;
+                width: 98vw;
+                min-width: 0;
+                box-sizing: border-box;
+            }
+            input[type="text"], input[type="number"], input[type="file"] {
+                width: 100%;
+                font-size: 15px;
+            }
+            h1 {
+                font-size: 1.2em;
+                margin-top: 18px;
+            }
+            .qr-section h2 {
+                font-size: 1.1em;
+            }
+            .api-doc-content {
+                width: 98vw;
+                padding: 18px 4vw 18px 4vw;
+            }
+        }
+    </style>
+    <script>
+        function isUpiId(text) {
+            var upiPattern = /^[\w.-]+@[\w.-]+$/;
+            var forbidden = [
+                '@gmail.com', '@yahoo.com', '@outlook.com', '@hotmail.com', '@protonmail.com',
+                '.com', '.net', '.org', '.edu', '.gov', '.co.in', '.ac.in', '.io', '.me', '.info', '.biz', '.xyz', '.co'
+            ];
+            if (!upiPattern.test(text.trim())) return false;
+            var lower = text.trim().toLowerCase();
+            for (var i = 0; i < forbidden.length; i++) {
+                if (lower.endsWith(forbidden[i])) return false;
+            }
+            return true;
+        }
+        function toggleUpiFields() {
+            var dataInput = document.getElementById('data-input');
+            var upiFields = document.getElementById('upi-fields');
+            if (isUpiId(dataInput.value)) {
+                upiFields.style.display = 'block';
+            } else {
+                upiFields.style.display = 'none';
+                document.getElementById('upi-name').value = '';
+                document.getElementById('amount').value = '';
+            }
+        }
+        window.onload = function() {
+            toggleUpiFields();
+            document.getElementById('data-input').addEventListener('input', toggleUpiFields);
+        };
+        function openApiDoc() {
+            document.getElementById('api-doc-modal').style.display = 'flex';
+        }
+        function closeApiDoc() {
+            document.getElementById('api-doc-modal').style.display = 'none';
+        }
+    </script>
+</head>
+<body>
+    <div class="top-bar">
+        <button class="api-btn" onclick="openApiDoc()">API</button>
+    </div>
+    <div id="api-doc-modal" class="api-doc-modal" onclick="if(event.target===this)closeApiDoc()">
+        <div class="api-doc-content">
+            <button class="close-btn" onclick="closeApiDoc()">&times;</button>
+            <h2>QR Code Generator API</h2>
+            <b>Endpoint:</b><br>
+            <code>POST /api/qrcode</code><br><br>
+            <b>Request (JSON):</b>
+            <pre>{
+  "data": "upi_id or text or url",
+  "upi_name": "optional",
+  "amount": "optional"
+}</pre>
+            <b>Response:</b>
+            <pre>{
+  "qr_image": "data:image/png;base64,..."
+}</pre>
+            <b>Direct PNG:</b><br>
+            <code>POST /api/qrcode?type=png</code> <br>
+            <span style="font-size:13px;color:#888;">(Response: image/png)</span>
+            <br><br>
+            <b>Example (Python):</b>
+            <pre>import requests
+resp = requests.post(
+    "http://qr-code-1-zith.onrender.com/api/qrcode",
+    json={"data": "someone@okicici", "upi_name": "Test User", "amount": "100"}
+)
+print(resp.json()["qr_image"])
+</pre>
+            <b>API Key:</b> <span style="color:#007aff;">Not required</span>
+            <br>
+            <a href="https://coff.ee/dbaidya811e" class="coffee-btn" target="_blank" rel="noopener">
+                <span class="coffee-cup">☕</span> Buy Me a Coffee
+            </a>
+        </div>
+    </div>
+    <h1>QR Code Generator</h1>
+    <form method="post" enctype="multipart/form-data">
+        <label>Text / URL / UPI ID:</label>
+        <input type="text" id="data-input" name="data" placeholder="Enter text, URL or UPI ID" value="{{ input_data|default('') }}" autocomplete="off">
+        <div id="upi-fields" style="display:none;">
+            <label>UPI Name (optional):</label>
+            <input type="text" id="upi-name" name="upi_name" placeholder="Payee Name" value="{{ upi_name|default('') }}" autocomplete="off">
+            <label>Amount (optional):</label>
+            <input type="number" id="amount" name="amount" placeholder="Amount (INR)" step="0.01" min="0" value="{{ amount|default('') }}">
+        </div>
+        <label>Or upload an image file:</label>
+        <input type="file" name="image_file" accept="image/*">
+        <button type="submit">Generate QR Code</button>
+    </form>
+    <div class="qr-section">
+        <h2>Your QR Code:</h2>
+        <img src="{{ qr_img }}" alt="QR Code">
+    </div>
+</body>
+</html>
